@@ -10,14 +10,15 @@ pipeline {
 
         stage('Clone Code') {
             steps {
-                git 'https://github.com/Rani2909/Jenkin-cicd-project.git'
+                git branch: 'main',
+                url: 'https://github.com/Rani2909/Jenkin-cicd-project.git'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar') {
-                    sh 'sonar-scannerr'
+                    sh 'sonar-scanner'
                 }
             }
         }
