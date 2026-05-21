@@ -1,13 +1,5 @@
 pipeline {
     agent any
-    tools {
-        sonarQube 'sonar-scanner'
-    }
-    
-    environment {
-        IMAGE_NAME = "rani2909/jenkins-cicd-project"
-        TAG = "latest"
-    }
 
     stages {
 
@@ -18,74 +10,11 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Test') {
             steps {
-                withSonarQubeEnv('sonar') {
-                    script {
-                        def scannerHome = tool 'sonar-scanner'
-                        sh """
-                        ${scannerHome}/bin/sonar-scanner \
-                        -Dsonar.projectKey=jenkins-cicd-project \
-                        -Dsonar.projectName=jenkins-cicd-project \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://host.docker.internal:9000
-                        """
+                sh 'pwd'
+                sh 'ls -la'
             }
-        }
-    }
-}
-
-        stage('Trivy Scan') {
-            steps {
-                sh 'trivy fs .'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t $IMAGE_NAME:$TAG .'
-            }
-        }
-
-        stage('Docker Login') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                }
-            }
-        }
-
-        stage('Push Image') {
-            steps {
-                sh 'docker push $IMAGE_NAME:$TAG'
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh 'kubectl apply -f deployment-service.yml'
-            }
-        }
-
-        stage('Restart Deployment') {
-            steps {
-                sh 'kubectl rollout restart deployment flask-app'
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'CI/CD Pipeline Executed Successfully!'
-        }
-
-        failure {
-            echo 'Pipeline Failed!'
         }
     }
 }
