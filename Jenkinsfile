@@ -1,6 +1,8 @@
 pipeline {
     agent any
-
+    tools {
+        sonarQube 'sonar-scanner'
+    }
     
     environment {
         IMAGE_NAME = "rani2909/jenkins-cicd-project"
