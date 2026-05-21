@@ -3,15 +3,9 @@ pipeline {
 
     stages {
 
-        stage('Clone Code') {
-            steps {
-                git branch: 'main',
-                url: 'https://github.com/Rani2909/Jenkin-cicd-project.git'
-            }
-        }
-
         stage('Test') {
             steps {
+                sh 'echo Jenkins Working'
                 sh 'pwd'
                 sh 'ls -la'
             }
