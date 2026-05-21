@@ -21,12 +21,17 @@ pipeline {
                 withSonarQubeEnv('sonar') {
                     script {
                         def scannerHome = tool 'sonar-scanner'
-
-                        sh "${scannerHome}/bin/sonar-scanner"
-                    }
-                }
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=jenkins-cicd-project \
+                        -Dsonar.projectName=jenkins-cicd-project \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://host.docker.internal:9000
+                        """
             }
         }
+    }
+}
 
         stage('Trivy Scan') {
             steps {
