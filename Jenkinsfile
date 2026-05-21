@@ -1,10 +1,7 @@
 pipeline {
     agent any
 
-    tools {
-        sonarQube 'sonar-scanner'
-    }
-
+    
     environment {
         IMAGE_NAME = "rani2909/jenkins-cicd-project"
         TAG = "latest"
@@ -25,14 +22,7 @@ pipeline {
                     script {
                         def scannerHome = tool 'sonar-scanner'
 
-                        sh """
-                        ${scannerHome}/bin/sonar-scanner \
-                        -Dsonar.projectKey=jenkins-cicd-project \
-                        -Dsonar.projectName=jenkins-cicd-project \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://host.docker.internal:9000 \
-                        -Dsonar.login=YOUR_SONAR_TOKEN
-                        """
+                        sh "${scannerHome}/bin/sonar-scanner"
                     }
                 }
             }
