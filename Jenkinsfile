@@ -1,9 +1,13 @@
 pipeline {
-
     agent any
 
+    tools {
+        sonarQube 'sonar-scanner'
+    }
+
     environment {
-        IMAGE_NAME = "rani2909/flask-cicd-app"
+        IMAGE_NAME = "rani2909/jenkins-cicd-project"
+        TAG = "latest"
     }
 
     stages {
@@ -18,20 +22,31 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar') {
-                    sh 'sonar-scanner'
+                    script {
+                        def scannerHome = tool 'sonar-scanner'
+
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=jenkins-cicd-project \
+                        -Dsonar.projectName=jenkins-cicd-project \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://host.docker.internal:9000 \
+                        -Dsonar.login=YOUR_SONAR_TOKEN
+                        """
+                    }
                 }
             }
         }
 
         stage('Trivy Scan') {
             steps {
-                sh 'trivy image $IMAGE_NAME'
+                sh 'trivy fs .'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                sh 'docker build -t $IMAGE_NAME:$TAG .'
             }
         }
 
@@ -39,23 +54,24 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub',
-                    usernameVariable: 'USER',
-                    passwordVariable: 'PASS'
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh 'echo $PASS | docker login -u $USER --password-stdin'
+
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                 }
             }
         }
 
         stage('Push Image') {
             steps {
-                sh 'docker push $IMAGE_NAME'
+                sh 'docker push $IMAGE_NAME:$TAG'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl apply -f kubernetes/'
+                sh 'kubectl apply -f deployment-service.yml'
             }
         }
 
@@ -63,6 +79,16 @@ pipeline {
             steps {
                 sh 'kubectl rollout restart deployment flask-app'
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'CI/CD Pipeline Executed Successfully!'
+        }
+
+        failure {
+            echo 'Pipeline Failed!'
         }
     }
 }
